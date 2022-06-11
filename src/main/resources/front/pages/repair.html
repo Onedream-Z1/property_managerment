@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>投诉</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../styles/common.css">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/page.css">
+    <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+
+<div id="app">
+
+    <div class="model" :class="{modelChange:isChanged}">
+        <div class="model-content">
+            <div class="model-header">
+                <h3>添加维修<i class="fa fa-times-circle" aria-hidden="true" @click="changeModel(0)"></i></h3>
+            </div>
+            <div class="model-body">
+                <span>维修内容</span>
+                <input rows="5" v-model="input" /><br/>
+                <el-button size="mini" @click="changeModel(0)">取消</el-button>
+                <el-button size="mini" type="primary" @click="saveRepair">确认</el-button>
+            </div>
+        </div>
+    </div>
+
+    <div class="complaint-header">
+        <div><h2> <i class="fa fa-wrench" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;维修</h2></div>
+        <el-button size="primary" type="success" @click="changeModel(1)">新维修<i class="fa fa-google-plus" aria-hidden="true" style="color: #333"></i></el-button>
+    </div>
+    <div class="complaint-body">
+        <h2 style="color: white;text-align: center;padding-top: 20px">我发布的维修&nbsp;&nbsp;<i class="fa fa-list-alt" aria-hidden="true"></i></h2>
+    </div>
+    <div class="complaint-footer">
+        <el-collapse v-model="activeName">
+            <el-collapse-item :title="item.text" :name="item.repairId" v-for="item in repairInfo">
+                <div>内容：{{item.text}}</div>
+                <p style="text-align: right">&nbsp;&nbsp;{{item.publishTime}}&nbsp;&nbsp;是否处理：{{item.type==0?'是':'否'}}</p>
+            </el-collapse-item>
+<!--            <el-collapse-item title="11栋下水管道堵了" name="2">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29&nbsp;&nbsp;是否处理：是</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="3">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29&nbsp;&nbsp;是否处理：是</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="4">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29&nbsp;&nbsp;是否处理：是</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="5">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="6">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="7">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="8">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11栋下水管道堵了" name="9">-->
+<!--                <div>11栋下水管道堵了</div>-->
+<!--                <p style="text-align: right">admin&nbsp;&nbsp;2022-5-29</p>-->
+<!--            </el-collapse-item>-->
+
+        </el-collapse>
+    </div>
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+
+<script src="../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../plugins/axios/axios.min.js"></script>
+
+<script src="../js/request.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data(){
+            return {
+                input:'',
+                isChanged:false,
+                activeName:'1',
+                repairInfo:[]
+            }
+        },
+        methods:{
+            changeModel(val){
+                console.log(val)
+                val===1?this.isChanged=true:this.isChanged=false
+                console.log(this.isChanged)
+            },
+            getRepair(){
+                let phone=sessionStorage.getItem("userPhone");
+                axios.get("/repair/getOne/"+phone).then((res)=>{
+                    if(res.data.code === 1){
+                        this.repairInfo=res.data.data
+                        for (let i = 0; i < this.repairInfo.length; i++) {
+                            this.repairInfo[i].publishTime=this.repairInfo[i].publishTime.toString().replaceAll(',','-')
+                        }
+                    }
+                })
+            },
+            saveRepair(){
+                if(this.input !== ''){
+                    this.isChanged=false;
+                    let phone=sessionStorage.getItem("userPhone");
+                    axios.post("/repair/save/"+phone,this.input).then((res)=>{
+                        if(res.data.code === 1){
+                            this.$message({
+                                message:res.data.data,
+                                type:'success'
+                            })
+                            this.getRepair()
+                        }else{
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }else {
+                    this.$message.error("请输入维修内容！")
+                }
+
+            }
+        },
+        computed:{
+
+        },
+        mounted(){
+            this.getRepair();
+        }
+    })
+</script>
+
+</body>
+</html>

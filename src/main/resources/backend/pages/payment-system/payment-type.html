@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>楼栋管理</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../styles/page.css">
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <h3><i class="fa fa-arrow-left" aria-hidden="true" style="cursor: pointer"></i>
+            <i class="fa fa-credit-card-alt globe" aria-hidden="true"></i>&nbsp;
+            <span>{{headerData}}</span></h3>
+        <i class="fa fa-arrow-right" aria-hidden="true" style="cursor: pointer"></i>
+    </div>
+
+    <div class="building-content">
+        <div class="building-header">
+            <h4>缴费：</h4>
+            <el-input v-model="input" placeholder="请输入缴费名"></el-input>
+            <el-button type="success" icon="el-icon-search" @click="pageList">搜索</el-button>
+            <el-button type="success" icon="el-icon-plus" @click="dialog = true" @click.up="isChange=false">添加</el-button>
+            <div class="export-print">
+                <i class="fa fa-file-excel-o" aria-hidden="true" onclick="btn_export()"></i>
+                <i class="fa fa-print" aria-hidden="true" onclick='javascript:window.print();'></i>
+                <i class="fa fa-share-alt-square" aria-hidden="true" @click="doFirstShare"></i>
+            </div>
+        </div>
+        <div class="building-center">
+
+            <el-table
+                    :data="tableData"
+                    style="width: 100%" border="true" id="table1">
+                <el-table-column align="center"
+                        label="id"
+                        prop="paymentTypeId">
+                </el-table-column>
+                <el-table-column align="center"
+                        label="缴费名"
+                        prop="name">
+                </el-table-column>
+                </el-table-column>
+                <el-table-column align="center">
+                    <template slot="header" slot-scope="scope">
+                        <el-link icon="el-icon-edit-outline" style="font-weight: bold;color: #333">编辑</el-link>
+                    </template>
+                    <template slot-scope="scope">
+                        <el-button
+                                size="mini"
+                                @click="handleEdit($event)">修改</el-button>
+                        <el-button
+                                size="mini"
+                                type="danger"
+                                @click="handleDelete($event)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+        </div>
+        <div class="building-footer">
+            <el-pagination
+                    @current-change="handleCurrentChange"
+                    :current-page="pn"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="page.size"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="page.total">
+            </el-pagination>
+        </div>
+    </div>
+
+    <el-drawer
+            :title="getTitle"
+            :before-close="handleClose"
+            :visible.sync="dialog"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer">
+        <div class="demo-drawer__content">
+            <el-form :model="form">
+                <el-form-item label="缴费名" :label-width="formLabelWidth">
+                    <el-input v-model="form.name" autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button @click="cancelForm">取 消</el-button>
+                <el-button type="primary" @click="updatePaymentType" :loading="loading">{{ loading ? '提交中 ...' : '确 定' }}</el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+</div>
+
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../api/building.js"></script>
+
+<script src="../../js/xlsx.core.min.js"></script>
+<script src="../../api/excelExport.js"></script>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                headerData: '缴费类型',
+                input: '',
+                pn: 1,
+                shareData: {
+                    title: '快来看看，智慧物业管理系统，你值得拥有',
+                    link: window.location.href,
+                    image: 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01f22259a8efb2a8012028a96414b6.png%401280w_1l_2o_100sh.png&refer=http%3A%2F%2Fimg.zcool.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1655536149&t=1afe91d46c03b4f4a5364007d1db20c8',
+                },
+                tableData: [],
+                table: false,
+                dialog: false,
+                loading: false,
+                form: {
+                    paymentTypeId:'',
+                    name: ''
+                },
+                formLabelWidth: '80px',
+                timer: null,
+                page: {
+                    total: '',
+                    size: ''
+                },
+                isChange: false,
+            }
+        },
+        computed: {
+            getTitle() {
+                if (this.form.paymentTypeId == null || this.form.paymentTypeId ==='') {
+                    return "添加缴费类型"
+                } else {
+                    return "修改缴费类型"
+                }
+            }
+        },
+        methods: {
+            handleEdit(event) {
+                this.isChange=true
+                this.dialog = true
+                let paymentTypeId = event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                for (let i = 0; i < this.tableData.length; i++) {
+                    if (this.tableData[i].paymentTypeId.toString() === paymentTypeId.toString()) {
+                        this.form.name = this.tableData[i].name;
+                        this.form.paymentTypeId=parseInt(paymentTypeId)
+                        console.log(this.form)
+                    }
+                }
+            },
+            saveBuilding() {
+                // axios.post("/save").data(this.form)
+            },
+            updatePaymentType() {
+                console.log(this.form)
+                if (this.form.name.length >=1) {
+                    if (this.isChange) {
+                        axios.put("/payment-type/update", this.form).then((res) => {
+                            console.log(res)
+                            if (res.data.code === 1) {
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.dialog = false;
+                                this.pageList();
+                                this.clearForm()
+                            } else {
+                                this.$message.error("修改失败")
+                            }
+                        })
+                    } else {
+                        axios.post("/payment-type/save", this.form).then((res) => {
+                            console.log(res)
+                            if (res.data.code === 1) {
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.dialog = false;
+                                this.pageList();
+                                this.clearForm()
+                            } else {
+                                this.$message.error("添加失败")
+                            }
+                        })
+                    }
+                } else {
+                    this.$message.error("字段不能为空，请检查！");
+                }
+            },
+            handleDelete(event) {
+                let paymentTypeId = event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                this.$confirm('是否永久删除id为《' + paymentTypeId + '》的记录, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.delete("/payment-type/" + paymentTypeId).then((res) => {
+                        if (res.data.code === 1) {
+                            this.$message({
+                                message: res.data.data,
+                                type: 'success'
+                            });
+                            this.pn=1;
+                            this.pageList();
+                        } else {
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+
+
+            },
+            handleCurrentChange(val) {
+                axios.get("/payment-type?pn=" + val + "&total=10" + "&name=" + this.input).then((res) => {
+                    console.log(res);
+                    if (res.data.code === 1) {
+                        this.tableData = res.data.data.records;
+                        this.page.total = res.data.data.total;
+                        this.page.size = res.data.data.size;
+                    }
+                })
+            },
+            doFirstShare() {
+                window.open("http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=" + this.shareData.link + "&title=" + "快来看看，智慧物业管理系统，你值得拥有" + "&pics=" + this.shareData.image);
+            },
+            handleClose(done) {
+                if (this.loading) {
+                    return;
+                }
+                this.clearForm()
+                this.$confirm('确定要提交表单吗？')
+                    .then(_ => {
+                        this.loading = true;
+                        this.timer = setTimeout(() => {
+                            done();
+                            // 动画关闭需要一定的时间
+                            setTimeout(() => {
+                                this.loading = false;
+                            }, 400);
+                        }, 2000);
+                    })
+                    .catch(_ => {
+                    });
+            },
+            cancelForm() {
+                this.clearForm()
+                console.log(this.form)
+                this.loading = false;
+                this.dialog = false;
+                clearTimeout(this.timer);
+            },
+            pageList() {
+                axios.get("/payment-type?pn=" + this.pn + "&total=10" + "&name=" + this.input).then((res) => {
+                    console.log(res);
+                    if (res.data.code === 1) {
+                        this.tableData = res.data.data.records;
+                        this.page.total = res.data.data.total;
+                        this.page.size = res.data.data.size;
+                    }
+                })
+            },
+            clearForm(){
+                this.form.paymentTypeId='';
+                this.form.name='';
+            },
+        },
+        mounted() {
+            this.pageList()
+        }
+    })
+</script>
+
+
+
+</body>
+</html>

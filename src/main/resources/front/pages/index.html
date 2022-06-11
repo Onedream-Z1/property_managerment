@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../styles/common.css">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/page.css">
+    <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+<div id="app">
+
+    <div class="main-header">
+        <template>
+            <div class="block">
+                <el-carousel height="217px">
+                    <el-carousel-item v-for="item in imgUrl" :key="item">
+                        <img :src="item"/>
+                    </el-carousel-item>
+                </el-carousel>
+            </div>
+        </template>
+    </div>
+
+    <div class="main-middle">
+
+        <el-row :gutter="20">
+            <el-col :span="8"><div class="grid-content  bg-purple1">
+                <p>我的投诉<i class="fa fa-info-circle" aria-hidden="true"></i></p>
+                <h2>{{userStatisticNum.complaintNum}}个</h2>
+            </div></el-col>
+            <el-col :span="8"><div class="grid-content bg-purple1">
+                <p>我的维修<i class="fa fa-info-circle" aria-hidden="true"></i></p>
+                <h2>{{userStatisticNum.repairNum}}个</h2>
+            </div></el-col>
+            <el-col :span="8"><div class="grid-content bg-purple1">
+                <p>我的账单<i class="fa fa-info-circle" aria-hidden="true"></i></p>
+                <h2>{{userStatisticNum.paymentNum}}个</h2>
+            </div></el-col>
+
+            <el-col :span="8"><div class="grid-content bg-purple2">
+                <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+                <p>查看投诉</p>
+            </div></el-col>
+            <el-col :span="8"><div class="grid-content bg-purple2">
+                <i class="fa fa-wrench" aria-hidden="true"></i>
+                <p>查看维修</p>
+            </div></el-col>
+            <el-col :span="8"><div class="grid-content bg-purple2">
+                <i class="fa fa-list-alt" aria-hidden="true"></i>
+                <p>查看账单</p>
+            </div></el-col>
+        </el-row>
+
+    </div>
+    <div class="extra" style="color: white;text-align: center;padding: 5px;width: 100%;height: auto;position: fixed;z-index: 10"><h2>通知公告</h2></div>
+    <div class="main-bottom">
+
+        <el-collapse v-model="activeName">
+            <el-collapse-item :title="item.subject" :name="item.noticeId" v-for="item in noticeInfo">
+                <div>{{item.text}}</div>
+                <p style="text-align: right">{{item.publisherName}}&nbsp;&nbsp;{{item.publishTimeStr}}</p>
+            </el-collapse-item>
+<!--            <el-collapse-item title="11.25停电通知" name="2">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11.25停电通知" name="3">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11.25停电通知" name="4">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11.25停电通知" name="5">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11.25停电通知" name="6">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+<!--            <el-collapse-item title="11.25停电通知" name="7">-->
+<!--                <div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
+<!--                <p style="text-align: right">admin</p>-->
+<!--            </el-collapse-item>-->
+        </el-collapse>
+    </div>
+
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+
+<script src="../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../plugins/axios/axios.min.js"></script>
+
+<script src="../js/request.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data(){
+            return {
+                imgUrl:[
+                    '../images/pic1.jpg',
+                    '../images/pic2.jpg',
+                    '../images/pic3.jpg',
+                    '../images/pic4.jpg',
+                ],
+                activeName: '1',
+                noticeInfo:[],
+                userStatisticNum:{}
+            }
+        },
+        methods:{
+            getNotice(){
+                axios.get("/notice?pn=1&total=1000&status=").then((res)=>{
+                    if(res.data.code === 1){
+                        this.noticeInfo=res.data.data.records
+                    }
+                })
+                axios.get("/userStatistic/"+sessionStorage.getItem("userPhone")).then((res)=>{
+                    if(res.data.code === 1){
+                        this.userStatisticNum = res.data.data;
+                    }
+                })
+            }
+
+        },
+        computed:{
+
+        },
+        mounted(){
+            this.getNotice()
+        }
+    })
+</script>
+
+</body>
+</html>

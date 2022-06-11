@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>房屋管理</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+          integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css"
+          integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
+            integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../../plugins/element-ui/index.css"/>
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../styles/page.css">
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <h3><i class="fa fa-arrow-left" aria-hidden="true" style="cursor: pointer"></i>
+            <i class="fa fa-list-alt globe" aria-hidden="true"></i>&nbsp;
+            <span>{{headerData}}</span></h3>
+        <i class="fa fa-arrow-right" aria-hidden="true" style="cursor: pointer"></i>
+    </div>
+
+    <div class="building-content">
+        <div class="building-header">
+            <h4>用户名:</h4>
+            <el-input v-model="input" placeholder="请输入用户名"></el-input>
+            <el-button type="success" icon="el-icon-search" @click="pageList">搜索</el-button>
+            <el-button type="success" icon="el-icon-plus" @click="dialog = true" @click.up="isChange=false">添加
+            </el-button>
+            <div class="export-print">
+                <i class="fa fa-file-excel-o" aria-hidden="true" onclick="btn_export()"></i>
+                <i class="fa fa-print" aria-hidden="true" onclick='javascript:window.print();'></i>
+                <i class="fa fa-share-alt-square" aria-hidden="true" @click="doFirstShare"></i>
+            </div>
+        </div>
+        <div class="building-center">
+
+            <el-table
+                    :data="tableData2"
+                    style="width: 100%" border="true" id="table1">
+                <el-table-column align="center" width="140"
+                                 label="#"
+                                 prop="userId">
+                </el-table-column>
+                <el-table-column align="center" width="150"
+                                 label="用户名"
+                                 prop="username" sortable="true">
+                </el-table-column>
+                <el-table-column align="center" width="150"
+                                 label="手机号"
+                                 prop="phone">
+                </el-table-column>
+                <el-table-column align="center" width="130"
+                                 label="性别"
+                                 prop="sex">
+                </el-table-column>
+                <el-table-column align="center" width="130"
+                                 label="车位"
+                                 prop="partName">
+                </el-table-column>
+                <el-table-column align="center" width="150"
+                                 label="房屋"
+                                 prop="roomName">
+                </el-table-column>
+                <el-table-column align="center">
+                    <template slot="header" slot-scope="scope">
+                        <el-link icon="el-icon-edit-outline" style="font-weight: bold;color: #333">编辑</el-link>
+                    </template>
+                    <template slot-scope="scope">
+                        <el-button size="mini" type="danger" @click="handle1('park',$event)">停用车位</el-button>
+                        <el-button size="mini" type="danger" @click="handle1('room',$event)">停用房屋</el-button>
+                        <el-button size="mini" type="success" @click="dialog2 = true" @click.up="getUserId($event)">房屋分配</el-button>
+                        <el-button size="mini" type="warning" @click="dialog3 = true" @click.up="getUserId($event)">车位分配</el-button>
+                        <el-button size="mini" type="primary" @click="paymentManager" @click.up="getUserId($event)">缴费管理</el-button>
+                        <el-button
+                                size="mini"
+                                @click="handleEdit($event)">修改
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <div class="building-footer">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="pn"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="page.size"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="page.total">
+            </el-pagination>
+        </div>
+    </div>
+
+    <el-drawer
+            :title="getTitle"
+            :before-close="handleClose"
+            :visible.sync="dialog"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer">
+        <div class="demo-drawer__content">
+            <el-form :model="form">
+                <el-form-item label="用户名" :label-width="formLabelWidth">
+                    <el-input v-model="form.username" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="手机号" :label-width="formLabelWidth">
+                    <el-input v-model="form.phone" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="性别" :label-width="formLabelWidth">
+                    <el-select v-model="form.sex" placeholder="请选择性别">
+                        <el-option
+                                :key="0"
+                                label="男"
+                                value="0">
+                        </el-option>
+                        <el-option
+                                :key="1"
+                                label="女"
+                                value="1">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button size="medium" @click="cancelForm">取 消</el-button>
+                <el-button size="medium" type="primary" @click="updateUser" :loading="loading">{{ loading ? '提交中 ...' :
+                    '确 定' }}
+                </el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+    <el-drawer
+            title="房屋分配"
+            :before-close="handleClose"
+            :visible.sync="dialog2"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer">
+        <div class="demo-drawer__content">
+            <el-form :model="form">
+                <el-form-item label="房屋" :label-width="formLabelWidth">
+                    <el-select v-model="formRoom" placeholder="请选择房屋">
+                        <el-option
+                                :key=""
+                                label=""
+                                value="0">
+                        </el-option>
+                        <el-option
+                                :key="item.roomId"
+                                :label="item.name"
+                                :value="item.roomId" v-for="item in roomInfo">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button size="medium" @click="cancelForm">取 消</el-button>
+                <el-button size="medium" type="primary" @click="allocationRoom()" :loading="loading">{{ loading ? '提交中 ...' :
+                    '确 定' }}
+                </el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+    <el-drawer
+            title="车位分配"
+            :before-close="handleClose"
+            :visible.sync="dialog3"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer">
+        <div class="demo-drawer__content">
+            <el-form :model="form">
+                <el-form-item label="车位" :label-width="formLabelWidth">
+                    <el-select v-model="formPark" placeholder="请选择车位">
+                        <el-option
+                                :key=""
+                                label=""
+                                value="0">
+                        </el-option>
+                        <el-option
+                                :key="item.parkId"
+                                :label="item.name"
+                                :value="item.parkId" v-for="item in parkInfo">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button size="medium" @click="cancelForm">取 消</el-button>
+                <el-button size="medium" type="primary" @click="allocationPark()" :loading="loading">{{ loading ? '提交中 ...' :
+                    '确 定' }}
+                </el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+
+</div>
+
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../api/building.js"></script>
+
+<script src="../../js/xlsx.core.min.js"></script>
+<script src="../../api/excelExport.js"></script>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                headerData: '用户管理',
+                input: '',
+                value: '',
+                pn: 1,
+                drawer: false,
+                direction: 'rtl',
+                shareData: {
+                    title: '快来看看，智慧物业管理系统，你值得拥有',
+                    link: window.location.href,
+                    image: 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01f22259a8efb2a8012028a96414b6.png%401280w_1l_2o_100sh.png&refer=http%3A%2F%2Fimg.zcool.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1655536149&t=1afe91d46c03b4f4a5364007d1db20c8',
+                },
+                tableData: [],
+                tableData2: [],
+                table: false,
+                dialog: false,
+                dialog2:false,
+                dialog3:false,
+                loading: false,
+                form: {
+                    userId: '',
+                    username: '',
+                    phone: '',
+                    sex: '',
+                    status: '',
+                    parting: '',
+                    room: '',
+                    payment: ''
+                },
+                formRoom:'',
+                formPark:'',
+                page: {
+                    total: '',
+                    size: ''
+                },
+                formLabelWidth: '80px',
+                timer: null,
+                isChange: false,
+                adminInfo: [],
+                roomInfo:[],
+                parkInfo:[],
+                globeUserId:'',
+            }
+        },
+        methods: {
+            handleEdit(event) {
+                this.dialog = true
+                let userId = event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                for (let i = 0; i < this.tableData.length; i++) {
+                    if (this.tableData[i].userId.toString() === userId.toString()) {
+                        this.form.userId = parseInt(userId);
+                        this.form.username = this.tableData[i].username;
+                        this.form.phone = this.tableData[i].phone;
+                        this.form.sex = this.tableData[i].sex;
+                        this.form.status = this.tableData[i].status;
+                        this.form.parting = this.tableData[i].parting;
+                        this.form.room = this.tableData[i].room;
+                        this.form.payment = this.tableData[i].payment;
+                        this.isChange = true;
+                        console.log(this.form)
+                    }
+                }
+            },
+            getUserId(event){
+                this.globeUserId = event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+            },
+            paymentManager(){
+                let payment={};
+                axios.get("/user/findOne/"+this.globeUserId).then((res)=>{
+                    payment=res.data;
+                    console.log(res.data);
+                    if(payment.data==null){
+                        this.$message({
+                            message:'没有找到用户相关的缴费信息！'
+                        })
+                    }else if(payment.data.status === 0){
+                        this.$message({
+                            message:'该用户已经缴费，无需操作！',
+                            type:'success'
+                        })
+                    }else if(payment.data.status === 1){
+
+                        this.$confirm('是确认为id为《'+this.globeUserId+'》的用户进行缴费, 是否继续?', '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }).then(() => {
+                            axios.put("/payment/"+this.globeUserId).then((res)=>{
+                                if(res.data.code===1){
+                                    this.$message({
+                                        message: res.data.data,
+                                        type: 'success'
+                                    });
+                                    this.pn=1;
+                                    this.pageList();
+                                }else{
+                                    this.$message.error(res.data.msg)
+                                }
+                            })
+                        }).catch(() => {
+                            this.$message({
+                                type: 'info',
+                                message: '已取消缴费操作'
+                            });
+                        });
+
+                    }
+                })
+
+            },
+            allocationRoom(){
+                this.dialog2 = false;
+                if(this.formRoom!==''){
+                    axios.put("/user/allocationRoom/"+this.globeUserId+"/"+this.formRoom).then((res)=>{
+                        if(res.data.code === 1){
+                            this.$message({
+                                message: res.data.data,
+                                type: 'success'
+                            });
+                            this.pageList();
+                        }else{
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }else{
+                    this.$message.error("未选择房屋，操作失败！");
+                    this.dialog2=true;
+                }
+
+
+                this.formRoom='';
+            },
+            allocationPark(){
+                this.dialog3 = false;
+                if(this.formPark!==''){
+                    axios.put("/user/allocationPark/"+this.globeUserId+"/"+this.formPark).then((res)=>{
+                        if(res.data.code === 1){
+                            this.$message({
+                                message: res.data.data,
+                                type: 'success'
+                            });
+                            this.pageList();
+                        }else{
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }else{
+                    this.$message.error("未选择车位,操作失败！");
+                    this.dialog3=true;
+                }
+                this.formPark='';
+            },
+            updateUser() {
+                console.log(this.form)
+                // let name=this.form.name;
+                let userId = this.form.userId;
+                let username = this.form.username;
+                if (username !== '') {
+                    if (this.isChange) {
+                        axios.put("/user/update", this.form).then((res) => {
+                            console.log(res)
+                            if (res.data.code === 1) {
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.tableData2 = {}
+                                this.dialog = false;
+                                this.pageList();
+                                this.clearForm();
+
+                            } else {
+                                this.$message.error("修改失败")
+                            }
+                        })
+                    } else {
+                        this.form.userId = null;
+                        axios.post("/user/save", this.form).then((res) => {
+                            console.log(res)
+                            if (res.data.code === 1) {
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.dialog = false;
+                                this.pageList();
+                                this.clearForm();
+                            } else {
+                                this.$message.error("添加失败")
+                            }
+                        }).catch(e => {
+                            this.$message.error("服务器内部错误！")
+                        })
+                    }
+                } else {
+                    this.$message.error("字段不能为空，请检查！")
+                }
+
+            },
+            clearForm() {
+                this.form.userId = '';
+                this.form.username = '';
+                this.form.phone = '';
+                this.form.sex = '';
+                this.form.status = '';
+                this.form.parting = '';
+                this.form.room = '';
+                this.form.payment = '';
+            },
+            handle1(flag, event) {
+
+                let userId = event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                console.log(userId)
+                let context = '';
+                if (flag === 'park') {
+                    context = '车位'
+                } else {
+                    context = '房屋'
+                }
+
+                this.$confirm('是否把id为【' + userId + '】的记录的【' + context + '】停用, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.put("/user/" + userId + "/" + flag).then((res) => {
+                        if (res.data.code === 1) {
+                            this.$message({
+                                message: res.data.data,
+                                type: 'success'
+                            });
+                            this.pn = 1;
+                            this.pageList();
+                        } else {
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                axios.get("/user?pn=" + val + "&total=10" + "&name=" + this.input).then((res) => {
+                    console.log(res.data);
+                    if (res.data.code === 1) {
+                        console.log(11111111);
+                        this.tableData = res.data.data.records;
+                        this.tableData2 = JSON.parse(JSON.stringify(res.data.data.records))
+                        this.page.total = res.data.data.total;
+                        this.page.size = res.data.data.size;
+                        this.getTableData();
+                    }
+                })
+            },
+            doFirstShare() {
+                window.open("http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=" + this.shareData.link + "&title=" + "快来看看，智慧物业管理系统，你值得拥有" + "&pics=" + this.shareData.image);
+            },
+            handleClose(done) {
+                if (this.loading) {
+                    return;
+                }
+                this.$confirm('确定要提交表单吗？')
+                    .then(_ => {
+                        this.loading = true;
+                        this.timer = setTimeout(() => {
+                            done();
+                            // 动画关闭需要一定的时间
+                            setTimeout(() => {
+                                this.loading = false;
+                            }, 400);
+                        }, 2000);
+                    })
+                    .catch(_ => {
+                    });
+            },
+            cancelForm() {
+                this.loading = false;
+                this.dialog = false;
+                this.dialog2 = false;
+                this.dialog3 = false;
+                clearTimeout(this.timer);
+                this.clearForm();
+                this.formRoom='';
+                this.formPark='';
+            },
+            pageList() {
+                axios.get("/user?pn=" + this.pn + "&total=10" + "&name=" + this.input).then((res) => {
+                    console.log(res.data);
+                    if (res.data.code === 1) {
+                        console.log(11111111);
+                        this.tableData = res.data.data.records;
+                        this.tableData2 = JSON.parse(JSON.stringify(res.data.data.records))
+                        this.page.total = res.data.data.total;
+                        this.page.size = res.data.data.size;
+                        this.getTableData();
+                    }
+                })
+
+                axios.get("/room?pn=1&total=10000"+"&status="+this.input).then((res)=>{
+                    console.log(res.data);
+                    if(res.data.code===1){
+                        console.log(11111111);
+                        this.roomInfo=res.data.data.records;
+                        for (let i = 0; i < this.roomInfo.length; i++) {
+                            this.roomInfo[i].name=this.roomInfo[i].unitName+this.roomInfo[i].name;
+                        }
+                        let temp=[];
+                        for (let i = 0,j=0; i < this.roomInfo.length; i++) {
+                            if(this.roomInfo[i].status===0){
+                                temp[j++]=this.roomInfo[i];
+                            }
+                        }
+                        this.roomInfo=temp;
+                    }
+                })
+
+                axios.get("/parking?pn="+this.pn+"&total=10000"+"&status="+this.input).then((res)=>{
+                    console.log(res.data);
+                    if(res.data.code===1){
+                        console.log(11111111);
+                        this.parkInfo=res.data.data.records;
+                        let temp=[];
+                        for (let i = 0,j=0; i < this.parkInfo.length; i++) {
+                            if(this.parkInfo[i].status===0){
+                                temp[j++]=this.parkInfo[i];
+                            }
+                        }
+                        this.parkInfo=temp;
+                    }
+                })
+
+            },
+            getTableData() {
+                for (let i = 0; i < this.tableData2.length; i++) {
+                    if (this.tableData2[i].sex === 0) {
+                        this.tableData2[i].sex = '男'
+                    } else {
+                        this.tableData2[i].sex = '女'
+                    }
+                }
+            },
+
+        },
+
+        computed: {
+            getTitle() {
+                if (this.form.userId == null || this.form.userId === '') {
+                    return "添加用户"
+                } else {
+                    return "修改用户"
+                }
+            },
+        },
+        mounted() {
+            this.pageList()
+
+        }
+    })
+</script>
+
+
+</body>
+</html>

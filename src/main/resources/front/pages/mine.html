@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>我的</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../styles/common.css">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/page.css">
+    <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+
+<div id="app">
+
+    <div class="complaint-header">
+        <div><h2> <i class="fa fa-wrench" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;个人信息</h2></div>
+        <el-button size="primary" class="updateInfo" type="success" @click="isUpdate = true">修改个人信息<i class="fa fa-google-plus" aria-hidden="true" style="color: #333"></i></el-button>
+    </div>
+    <div class="complaint-body">
+        <h2 style="color: white;text-align: center;padding-top: 20px">我的信息&nbsp;&nbsp;<i class="fa fa-list-alt" aria-hidden="true"></i></h2>
+    </div>
+    <div class="complaint-footer complaint-footer2">
+        <span>昵称</span><input :disabled="isUpdate==false" type="text" v-model="form.username"/><br/ >
+        <span>电话</span><input :disabled="isUpdate==false" type="text" v-model="form.phone"/><br/>
+        <span>性别</span><select :disabled="isUpdate==false" v-model="form.sex">
+                                <option value="0">男</option>
+                                <option value="1">女</option>
+                        </select><br/>
+        <span>描述</span><textarea :disabled="isUpdate==false" style="height: 110px" rows="5" v-model="form.description"></textarea><br/>
+        <span>地址</span><input :disabled="isUpdate==false" type="text" v-model="form.address"/><br/>
+        <div v-if="isUpdate">
+            <el-button class="btn1" type="primary" size="medium " @click="submitForm">提交</el-button>
+            <el-button size="medium " @click="resetForm">取消</el-button>
+        </div>
+    </div>
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+
+<script src="../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../plugins/axios/axios.min.js"></script>
+
+<script src="../js/request.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data(){
+            return {
+                input:'',
+                isChanged:false,
+                activeName:'1',
+                form:{
+                    userId:'',
+                    username:'',
+                    phone:'',
+                    sex:'',
+                    description:'',
+                    address:''
+                },
+                isUpdate:false
+            }
+        },
+        methods:{
+            changeModel(val){
+                console.log(val)
+                val===1?this.isChanged=true:this.isChanged=false
+                console.log(this.isChanged)
+            },
+            submitForm(){
+                axios.put("/user/update",this.form).then((res)=>{
+                    if (res.data.code === 1){
+                        this.$message({
+                            message:res.data.data,
+                            type:'success'
+                        })
+                        this.getUser();
+                        this.isUpdate=false;
+                    }else{
+                        this.$message.error(res.data.msg)
+                    }
+                })
+            },
+            resetForm(){
+                this.isUpdate=false;
+                this.getUser();
+            },
+            getUser(){
+                axios.get("/user/getOne/"+sessionStorage.getItem("userPhone")).then((res)=>{
+                    if(res.data.code === 1){
+                        this.form.userId = res.data.data.userId;
+                        this.form.username = res.data.data.username;
+                        this.form.phone = res.data.data.phone;
+                        this.form.sex = res.data.data.sex;
+                        this.form.description = res.data.data.description;
+                        this.form.address = res.data.data.address;
+                    }
+                })
+            }
+
+        },
+        computed:{
+
+        },
+        mounted(){
+            this.getUser()
+        }
+    })
+</script>
+
+</body>
+</html>

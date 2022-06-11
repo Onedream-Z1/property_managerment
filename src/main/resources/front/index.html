@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>智慧物业管理</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/page.css">
+    <link rel="stylesheet" href="styles/login.css">
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header>
+            <h2>智慧物业Reno</h2>
+            <i class="fa fa-yelp" aria-hidden="true"></i>
+            <i class="fa fa-plus-square" aria-hidden="true"></i>
+        </el-header>
+
+
+        <div class="app-main" v-loading="loading">
+            <div class="divTmp" v-show="loading"></div>
+            <iframe style="width: 90%;height: 100%;margin-left: 19px"
+                    id="cIframe"
+                    class="c_iframe"
+                    name="cIframe"
+                    :src="iframeUrl"
+                    height="auto"
+                    frameborder="0"
+                    v-show="!loading"
+                    scrolling="no"
+            ></iframe>
+        </div>
+        <el-footer>
+            <el-row :gutter="20">
+                <el-col :span="5"><div class="grid-content bg-purple" @click="menuHandle('2')"
+                                       :class="{activePage:buttonChange.isChange2}">
+                    <div>
+                        <i class="fa fa-home" aria-hidden="true"></i>
+                        <span>首页</span>
+                    </div>
+                </div></el-col>
+                <el-col :span="5"><div class="grid-content bg-purple" @click="menuHandle('3')" :class="{activePage:buttonChange.isChange3}">
+                    <div>
+                        <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+                        <span>投诉</span>
+                    </div>
+                </div></el-col>
+                <el-col :span="4"><div class="grid-content bg-purple" @click="menuHandle('4')" :class="{activePage:buttonChange.isChange4}">
+                    <div class="no-marginLeft">
+                        <i class="fa fa-wrench" aria-hidden="true"></i>
+                        <span>维修</span>
+                    </div>
+                </div></el-col>
+                <el-col :span="5"><div class="grid-content bg-purple" @click="menuHandle('5')" :class="{activePage:buttonChange.isChange5}">
+                    <div>
+                        <i class="fa fa-list-alt" aria-hidden="true"></i>
+                        <span>账单</span>
+                    </div>
+                </div></el-col>
+                <el-col :span="5"><div class="grid-content bg-purple" @click="menuHandle('6')" :class="{activePage:buttonChange.isChange6}">
+                    <div>
+                        <i class="fa fa-user-md" aria-hidden="true"></i>
+                        <span>我的</span>
+                    </div>
+                </div></el-col>
+            </el-row>
+        </el-footer>
+    </el-container>
+</div>
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+
+<script src="plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="plugins/axios/axios.min.js"></script>
+
+<script src="js/request.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data(){
+            return {
+                imgUrl:[
+                    'images/pic1.jpg',
+                    'images/pic2.jpg',
+                    'images/pic3.jpg',
+                    'images/pic4.jpg',
+                ],
+                iframeUrl:'pages/index.html',
+                loading:false,
+                isLoading:false,
+                timer:null,
+                buttonChange:{
+                    isChange2:true,
+                    isChange3:false,
+                    isChange4:false,
+                    isChange5:false,
+                    isChange6:false
+                },
+                menuList:[
+                    {
+                        id: '2',
+                        name: '首页',
+                        url: 'pages/index.html',
+                    },
+                    {
+                        id: '3',
+                        name: '投诉',
+                        url: 'pages/complaint.html',
+                    },
+                    {
+                        id: '4',
+                        name: '维修',
+                        url: 'pages/repair.html',
+                    },
+                    {
+                        id: '5',
+                        name: '账单',
+                        url: 'pages/payment.html',
+                    },
+                    {
+                        id: '6',
+                        name: '我的',
+                        url: 'pages/mine.html',
+                    },
+                ]
+
+            }
+        },
+        methods:{
+            menuHandle(itemNum) {
+                this.changeButtonFalse();
+                let buttonNum=parseInt(itemNum);
+                switch (buttonNum) {
+                    case 2: this.buttonChange.isChange2=true;break;
+                    case 3: this.buttonChange.isChange3=true;break;
+                    case 4: this.buttonChange.isChange4=true;break;
+                    case 5: this.buttonChange.isChange5=true;break;
+                    case 6: this.buttonChange.isChange6=true;break;
+                }
+                console.log(this.buttonChange)
+
+                console.log("itemNum="+itemNum)
+                this.menuList.forEach(index=>{
+                    if(index.id === itemNum){
+                        console.log(index)
+                        this.iframeUrl=index.url
+                    }
+                })
+                console.log(this.iframeUrl)
+                this.loading = true
+                this.closeLoading()
+            },
+            closeLoading(){
+                this.timer = null
+                this.timer = setTimeout(()=>{
+                    this.loading = false
+                },1000)
+            },
+            changeButtonFalse(){
+                this.buttonChange.isChange2=false;
+                this.buttonChange.isChange3=false;
+                this.buttonChange.isChange4=false;
+                this.buttonChange.isChange5=false;
+                this.buttonChange.isChange6=false;
+            }
+        },
+        computed:{
+
+        },
+        mounted(){
+
+        }
+    })
+</script>
+
+</body>
+</html>

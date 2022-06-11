@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>控制台</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../styles/page.css">
+
+</head>
+<body>
+
+<div id="app">
+    <div class="header">
+        <h3><i class="fa fa-arrow-left" aria-hidden="true" style="cursor: pointer"></i>
+            <i class="fa fa-home globe" aria-hidden="true"></i>&nbsp;
+            <span>{{headerData}}</span></h3>
+        <i class="fa fa-arrow-right" aria-hidden="true" style="cursor: pointer"></i>
+    </div>
+    <el-row :gutter="20">
+        <el-col :span="6"><div class="grid-content bg-purple g1" @click="pageTurn('pages/user/user.html')">
+            <div class="left">
+                <h1>{{tableData.userNum}}</h1>
+                <span>业主</span>
+            </div>
+            <div class="right">
+                <i class="fa fa-th-list"  aria-hidden="true" style="display: inline-block"></i>
+            </div>
+        </div></el-col>
+        <el-col :span="6"><div class="grid-content bg-purple g2" @click="pageTurn('pages/community-service/notice.html')">
+            <div class="left">
+                <h1>{{tableData.noticeNum}}</h1>
+                <span>公告</span>
+            </div>
+            <div class="right">
+                <i class="fa fa-bell"  aria-hidden="true" style="display: inline-block"></i>
+            </div>
+        </div></el-col>
+        <el-col :span="6"><div class="grid-content bg-purple g3" @click="pageTurn('pages/community-service/complaint.html')">
+            <div class="left">
+                <h1>{{tableData.complaintNum}}</h1>
+                <span>投诉</span>
+            </div>
+            <div class="right">
+                <i class="fa fa-envelope"  aria-hidden="true" style="display: inline-block"></i>
+            </div>
+        </div></el-col>
+        <el-col :span="6"><div class="grid-content bg-purple g4" @click="pageTurn('pages/community-service/repair.html')">
+            <div class="left">
+                <h1>{{tableData.repairNum}}</h1>
+                <span>维修</span>
+            </div>
+            <div class="right">
+                <i class="fa fa-wrench"  aria-hidden="true" style="display: inline-block"></i>
+            </div>
+        </div></el-col>
+    </el-row>
+
+    <el-row :gutter="15" class="console">
+        <el-col :span="8"><div class="grid-content bg-purple gg1" @click="pageTurn('pages/home-system/room.html')">
+            <div class="console-header">
+                <h4>房屋统计</h4>
+                <hr style="border-color: #cdcdcd;margin-top: 0"/>
+            </div>
+            <div class="middle">
+                <el-progress type="circle" class="progress" width="300" :percentage="rates(tableData.room.roomFree,tableData.room.roomTotal)"></el-progress>
+            </div>
+            <div class="bottom-left">
+                <span>{{tableData.room.roomFree}}</span>
+                <span>闲置</span>
+            </div>
+            <div class="bottom-right">
+                <span>{{tableData.room.roomTotal}}</span>
+                <span>总数</span>
+            </div>
+        </div></el-col>
+        <el-col :span="8"><div class="grid-content bg-purple gg1" @click="pageTurn('pages/parking/parking.html')">
+            <div class="console-header">
+                <h4>车位统计</h4>
+                <hr style="border-color: #cdcdcd;margin-top: 0"/>
+            </div>
+            <div class="middle">
+                <el-progress type="circle" class="progress" width="300" :percentage="rates(tableData.park.parkFree,tableData.park.parkTotal)"></el-progress>
+            </div>
+            <div class="bottom-left">
+                <span>{{tableData.park.parkFree}}</span>
+                <span>闲置</span>
+            </div>
+            <div class="bottom-right">
+                <span>{{tableData.park.parkTotal}}</span>
+                <span>总数</span>
+            </div>
+        </div></el-col>
+        <el-col :span="8"><div class="grid-content bg-purple gg1" @click="pageTurn('pages/payment-system/payment.html')">
+            <div class="console-header">
+                <h4>缴费统计</h4>
+                <hr style="border-color: #cdcdcd;margin-top: 0"/>
+            </div>
+            <div class="middle">
+                <el-progress type="circle" class="progress" width="300" :percentage="rates(tableData.payment.paymentFree,tableData.payment.paymentTotal)"></el-progress>
+            </div>
+            <div class="bottom-left">
+                <span>{{tableData.payment.paymentFree}}</span>
+                <span>未缴</span>
+            </div>
+            <div class="bottom-right">
+                <span>{{tableData.payment.paymentTotal}}</span>
+                <span>已缴</span>
+            </div>
+        </div></el-col>
+
+    </el-row>
+
+</div>
+
+
+
+    <!-- 开发环境版本，包含了有帮助的命令行警告 -->
+    <script src="../../plugins/vue/vue.js"></script>
+    <!-- 引入组件库 -->
+
+    <script src="../../plugins/element-ui/index.js"></script>
+    <!-- 引入axios -->
+    <script src="../../plugins/axios/axios.min.js"></script>
+
+    <script src="../../js/request.js"></script>
+    <script src="../../api/console.js"></script>
+
+    <script>
+        new Vue({
+            el:'#app',
+            data(){
+                return {
+                    headerData:'控制台',
+                    tableData:{}
+                }
+            },
+            methods: {
+                rates(num1,num2){
+                    console.log(num1,num2)
+                    return  parseInt(((num1/num2)*100).toFixed(0));
+                },
+                pageList(){
+                    axios.get("/statistic").then((res)=>{
+                        console.log(res.data)
+                        if(res.data.code === 1){
+                            this.tableData=res.data.data
+                            console.log(this.tableData)
+                        }else{
+                            this.$message.error("服务器出错啦！");
+                        }
+                    })
+                },
+                pageTurn(targetUrl){
+                    console.log(targetUrl);
+                    console.log(window.location)
+                    console.log(window.location.href)
+                    window.location.href='http://localhost:9999/backend/'+targetUrl
+
+                }
+            },
+            computed:{
+                // rates(num1,num2){
+                //     console.log(num1,num2)
+                //     return ((num1/num2)*100).toFixed(0);
+                // }
+            },
+            mounted(){
+                this.pageList()
+            }
+        })
+
+    </script>
+</body>
+</html>

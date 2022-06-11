@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧物业管理系统</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/login.css">
+    <style>
+        .body{
+            min-width: 1366px;
+        }
+        .app-main{
+            height: calc(100% - 64px);
+        }
+        .app-main .divTmp{
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <el-menu
+            :default-active="activeIndex2"
+            class="el-menu-demo"
+            mode="horizontal"
+            background-color="#3f51b5"
+            text-color="#fffff"
+            active-text-color="#3f51b5">
+
+        <h4 class="title-index"><i class="fa fa-rocket" aria-hidden="true" aria-setsize="middle"></i>&nbsp;&nbsp;智慧物业管理系统</h4>
+        <el-menu-item index="2"><i class="fa fa-outdent" aria-hidden="true"></i></el-menu-item>
+        <el-menu-item class="el-menu-item-copy" index="1"><i class="fa fa-repeat" aria-hidden="true"></i></el-menu-item>
+        <el-menu-item id="el-menu-item-copy2" index="3" ><i class="fa fa-arrows" aria-hidden="true"></i></el-menu-item>
+        <el-menu-item index="4"><i class="fa fa-tags" aria-hidden="true"></i></el-menu-item>
+        <el-submenu index="5">
+            <template slot="title"><i class="fa fa-user-md" aria-hidden="true"></i><span id="adminName">&nbsp;{{username}}</span></template>
+            <div v-if="isLogin">
+                <el-menu-item class="el-menu-item-sub" index="5-1" @click="personCenter"><span>个人中心</span></el-menu-item>
+                <el-menu-item class="el-menu-item-sub" index="5-2" @click.down="changePass"  @click="dialog = true"><span>修改密码</span></el-menu-item>
+                <el-menu-item class="el-menu-item-sub" index="5-3" @click="logout"><span>退出</span></el-menu-item>
+            </div>
+            <div v-if="!isLogin">
+                <el-menu-item class="el-menu-item-sub" index="5-1" @click="logout"><span>去登陆</span></el-menu-item>
+            </div>
+        </el-submenu>
+        <el-menu-item index="6"><i class="fa fa-ravelry" aria-hidden="true"></i></i></el-menu-item>
+
+    </el-menu>
+
+
+    <el-drawer
+            title="修改密码!"
+            :before-close="handleClose"
+            :visible.sync="dialog"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer"
+    >
+        <div class="demo-drawer__content">
+            <el-form >
+                <el-form-item label="原密码" prop="pass" style="margin-left: 20px">
+                    <el-input type="password" style="width: 350px;" v-model="ruleForm.oldPass" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="新密码" prop="pass" style="margin-left: 20px">
+                    <el-input type="password" style="width: 350px;" v-model="ruleForm.newPass" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="确认密码" prop="checkPass" style="margin-left: 20px">
+                    <el-input type="password" style="width: 350px;" v-model="ruleForm.checkPass" autocomplete="off"></el-input>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button @click="cancelForm" style="width: 44%;margin-left: 20px;position: absolute;bottom: 20px;left: 20px">取 消</el-button>
+                <el-button type="primary" style="width: 44%;position: absolute;bottom: 20px;right: 20px" @click.up="changePass">确定</el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+
+    <el-row>
+        <el-col :span="12">
+            <el-menu
+                    default-active="2"
+                    class="el-menu-vertical-demo"
+                    background-color="#222"
+                    text-color="#fff"
+                    active-text-color="#3f51b5">
+                <el-submenu index="1">
+                    <template slot="title">
+                        <i class="fa fa-home" aria-hidden="true"></i>
+                        <span>首页</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item id="el-menu-item-1" index="1-1" @click="menuHandle('2')">控制台</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-submenu index="2">
+                    <template slot="title">
+                        <i class="fa fa-cogs" aria-hidden="true"></i>
+                        <span slot="title">房屋系统</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item index="2-1" @click="menuHandle('3')">楼栋管理</el-menu-item>
+                        <el-menu-item index="2-2" @click="menuHandle('4')">单元管理</el-menu-item>
+                        <el-menu-item index="2-3" @click="menuHandle('5')">房屋管理</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-submenu index="3">
+                    <template slot="title">
+                        <i class="fa fa-car" aria-hidden="true"></i>
+                        <span slot="title">车位系统</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item index="3-1" @click="menuHandle('6')">车位管理</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-submenu index="4">
+                    <template slot="title">
+                        <i class="fa fa-credit-card-alt" aria-hidden="true"></i>
+                        <span slot="title">缴费系统</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item index="4-1" @click="menuHandle('7')">缴费类型</el-menu-item>
+                        <el-menu-item index="4-2" @click="menuHandle('8')">缴费管理</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-submenu index="5">
+                    <template slot="title">
+                        <i class="fa fa-users" aria-hidden="true"></i>
+                        <span slot="title">社区系统</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item index="5-1" @click="menuHandle('9')">公告管理</el-menu-item>
+                        <el-menu-item index="5-2" @click="menuHandle('10')">维修管理</el-menu-item>
+                        <el-menu-item index="5-3" @click="menuHandle('11')">投诉管理</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-submenu index="6">
+                    <template slot="title">
+                        <i class="fa fa-list-alt" aria-hidden="true"></i>
+                        <span slot="title">用户系统</span>
+                    </template>
+                    <el-menu-item-group>
+                        <el-menu-item index="6-1" @click="menuHandle('12')">用户管理</el-menu-item>
+                    </el-menu-item-group>
+                </el-submenu>
+
+                <el-menu-item index="7" @click="menuHandle('13')">
+                    <i class="fa fa-pinterest-p" aria-hidden="true"></i>
+                    <span slot="title">个人中心</span>
+                </el-menu-item>
+
+                <el-menu-item index="8" @click="menuHandle('14')">
+                    <i class="fa fa-comments" aria-hidden="true"></i>
+                    <span slot="title">交流中心</span>
+                </el-menu-item>
+
+
+            </el-menu>
+        </el-col>
+    </el-row>
+    <div class="app-main" v-loading="loading" v-if="isLogin">
+        <div class="divTmp" v-show="loading"></div>
+        <iframe
+                id="cIframe"
+                class="c_iframe"
+                name="cIframe"
+                :src="iframeUrl"
+                height="auto"
+                frameborder="0"
+                v-show="!loading"
+                scrolling="no"
+        ></iframe>
+    </div>
+</div>
+
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+
+<script src="plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="plugins/axios/axios.min.js"></script>
+
+<script src="js/request.js"></script>
+<script src="api/login.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data() {
+            return {
+                activeIndex: '1',
+                activeIndex2: '1',
+                username:'',
+                menuActived: '2',
+                userInfo: {},
+                menuList: [
+                    {
+                        id: '2',
+                        name: '控制台',
+                        url: 'pages/index/console.html',
+                    },
+                    {
+                        id: '3',
+                        name: '楼栋管理',
+                        url: 'pages/home-system/building.html',
+                    },
+                    {
+                        id: '4',
+                        name: '单元管理',
+                        url: 'pages/home-system/unit.html',
+                    },
+                    {
+                        id: '5',
+                        name: '房屋管理',
+                        url: 'pages/home-system/room.html',
+                    },
+                    {
+                        id: '6',
+                        name: '车位管理',
+                        url: 'pages/parking/parking.html',
+                    },
+                    {
+                        id: '7',
+                        name: '缴费类型',
+                        url: 'pages/payment-system/payment-type.html',
+                    },
+                    {
+                        id: '8',
+                        name: '缴费管理',
+                        url: 'pages/payment-system/payment.html',
+                    },
+                    {
+                        id: '9',
+                        name: '公告管理',
+                        url: 'pages/community-service/notice.html',
+                    },
+                    {
+                        id: '10',
+                        name: '维修管理',
+                        url: 'pages/community-service/repair.html',
+                    },
+                    {
+                        id: '11',
+                        name: '投诉管理',
+                        url: 'pages/community-service/complaint.html',
+                    },
+                    {
+                        id: '12',
+                        name: '用户管理',
+                        url: 'pages/user/user.html',
+                    },
+                    {
+                        id: '13',
+                        name: '个人中心',
+                        url: 'pages/personal-center/personal-center.html',
+                    },
+                    {
+                        id: '14',
+                        name: '交流中心',
+                        url: 'pages/community-center/community-center.html',
+                    },
+                    //   ],
+                    // },
+                ],
+                iframeUrl: 'pages/index/console.html',
+                // headTitle: '员工管理',
+                timer: null,
+                dialog: false,
+                loading: false,
+                formLabelWidth: '80px',
+                table: false,
+                ruleForm:{
+                    oldPass: '',
+                    newPass:'',
+                    checkPass:''
+                },
+                isLogin: false
+            }
+            },
+             computed: {},
+             // created() {
+             //     const userInfo = window.localStorage.getItem('userInfo')
+             //     if (userInfo) {
+             //         this.userInfo = JSON.parse(userInfo)
+             //     }
+             //     this.closeLoading()
+             // },
+             beforeDestroy() {
+                 this.timer = null
+                 clearTimeout(this.timer)
+             },
+             mounted() {
+                 this.getUserName();
+                 window.menuHandle = this.menuHandle('2')
+             },
+             methods: {
+                 logout() {
+                     console.log(1)
+                     axios.post("/login/logout").then((res)=>{
+                         console.log(res.data)
+                         if(res.data.code === 1){
+                             console.log("我来了")
+                             this.isLogin=false;
+                             localStorage.removeItem('admin')
+                             localStorage.removeItem('adminPhone')
+                             window.location.href = '/backend/pages/login/login.html'
+                         }
+                     })
+                 },
+                 changePass(){
+                    let phone=localStorage.getItem("adminPhone");
+                    phone=phone.slice(1,phone.length-1);
+                     if(this.ruleForm.newPass === this.ruleForm.checkPass){
+                         console.log(phone)
+                         console.log(this.ruleForm.oldPass)
+                         console.log(this.ruleForm.newPass)
+                         axios.post("/login/changePass/"+phone+"/"+this.ruleForm.oldPass+"/"+this.ruleForm.newPass).then((res)=>{
+                             if(res.data.code === 1){
+                                 this.$message({
+                                     message: res.data.data,
+                                     type: 'success'
+                                 });
+                                 this.dialog = false;
+                             }else{
+                                 this.$message.error(res.data.msg)
+                             }
+                         })
+                     }else{
+                         this.$message.error("两次密码输入不一致，请重新输入！")
+                     }
+
+                 },
+                 getUserName(){
+                     console.log(localStorage.getItem("admin"))
+                     if(localStorage.getItem("admin")!==null){
+                         this.username=localStorage.getItem("admin").slice(1,localStorage.getItem("admin").length-1);
+                         this.isLogin=true;
+                     }else{
+                         this.username="未登录"
+                     }
+                 },
+                 goBack() {
+                     // window.location.href = 'javascript:history.go(-1)'
+                     const menu = this.menuList.find(item=>item.id===this.menuActived)
+                     // this.goBackFlag = false
+                     // this.headTitle = menu.name
+                     this.menuHandle(menu,false)
+                 },
+                 menuHandle(itemNum) {
+                     console.log("itemNum="+itemNum)
+                     this.menuList.forEach(index=>{
+                         if(index.id === itemNum){
+                             console.log(index)
+                             this.iframeUrl=index.url
+                         }
+                     })
+                     console.log(this.iframeUrl)
+                     this.loading = true
+                     this.closeLoading()
+                 },
+                 closeLoading(){
+                     this.timer = null
+                     this.timer = setTimeout(()=>{
+                         this.loading = false
+                     },1000)
+                 },
+                 handleSelect(key, keyPath) {
+                     console.log(1, keyPath);
+
+                 },
+                 personCenter(){
+                     this.iframeUrl='pages/personal-center/personal-center.html';
+                 },
+                 handleClose(done) {
+                     if (this.loading) {
+                         return;
+                     }
+                     this.$confirm('确定要提交表单吗？')
+                         .then(_ => {
+                             this.loading = true;
+                             this.timer = setTimeout(() => {
+                                 done();
+                                 // 动画关闭需要一定的时间
+                                 setTimeout(() => {
+                                     this.loading = false;
+                                 }, 400);
+                             }, 2000);
+                         })
+                         .catch(_ => {});
+                 },
+                 cancelForm() {
+                     this.loading = false;
+                     this.dialog = false;
+                     clearTimeout(this.timer);
+                 }
+
+             }
+
+    })
+
+
+</script>
+</body>
+</html>

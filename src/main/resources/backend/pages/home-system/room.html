@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>房屋管理</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../plugins/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../../plugins/element-ui/index.css" />
+    <link rel="stylesheet" href="../../styles/common.css">
+    <link rel="stylesheet" href="../../styles/page.css">
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <h3><i class="fa fa-arrow-left" aria-hidden="true" style="cursor: pointer"></i>
+            <i class="fa fa-cogs globe" aria-hidden="true"></i>&nbsp;
+            <span>{{headerData}}</span></h3>
+        <i class="fa fa-arrow-right" aria-hidden="true" style="cursor: pointer"></i>
+    </div>
+
+    <div class="building-content">
+        <div class="building-header">
+            <h4>房间：</h4>
+            <el-select v-model="input" placeholder="请选择房间状态">
+                <el-option
+                        :key=""
+                        label=""
+                        value="">
+                </el-option>
+                <el-option
+                        :key="0"
+                        label="已入住"
+                        value="1">
+                </el-option>
+                <el-option
+                        :key="1"
+                        label="未入住"
+                        value="0">
+                </el-option>
+            </el-select>
+            <el-button type="success" icon="el-icon-search" @click="pageList">搜索</el-button>
+            <el-button type="success" icon="el-icon-plus" @click="dialog = true" @click.up="isChange=false">添加</el-button>
+            <div class="export-print">
+                <i class="fa fa-file-excel-o" aria-hidden="true" onclick="btn_export()"></i>
+                <i class="fa fa-print" aria-hidden="true" onclick='javascript:window.print();'></i>
+                <i class="fa fa-share-alt-square" aria-hidden="true" @click="doFirstShare"></i>
+            </div>
+        </div>
+        <div class="building-center">
+
+            <el-table
+                    :data="tableData2"
+                    style="width: 100%" border=true id="table1">
+                <el-table-column align="center"
+                        label="#"
+                        prop="roomId">
+                </el-table-column>
+                <el-table-column align="center"
+                        label="房间名"
+                        prop="name" sortable="true">
+                </el-table-column>
+                <el-table-column align="center"
+                        label="房间面积/m²"
+                        prop="area">
+                </el-table-column>
+                <el-table-column align="center"
+                        label="房间状态"
+                        prop="status">
+                </el-table-column>
+                <el-table-column align="center"
+                        label="隶属单元"
+                        prop="unitName">
+                </el-table-column>
+                <el-table-column align="center">
+                    <template slot="header" slot-scope="scope">
+                        <el-link icon="el-icon-edit-outline" style="font-weight: bold;color: #333">编辑</el-link>
+                    </template>
+                    <template slot-scope="scope">
+
+                        <el-button size="mini" @click="drawer = true" @click.up="getDescription($event)">
+                            详情
+                        </el-button>
+                        <el-button
+                                size="mini"
+                                @click="handleEdit($event)">修改</el-button>
+                        <el-button
+                                size="mini"
+                                type="danger"
+                                @click="handleDelete($event)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <div class="building-footer">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="pn"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="page.size"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="page.total">
+            </el-pagination>
+        </div>
+    </div>
+
+    <el-drawer
+            title="详细信息"
+            direction="ltr"
+            :visible.sync="drawer"
+            :with-header="true">
+    <div>
+        <p style="margin-left: 20px;font-size: 20px;"><span style="font-weight: bold">业主：</span>{{description.username}}</p>
+        <p style="margin-left: 20px;font-size: 20px;"><span style="font-weight: bold">电话：</span>{{description.userId}}</p>
+        <p style="margin-left: 20px;font-size: 20px;"><span style="font-weight: bold">性别：</span>{{description.sex!=null?(description.sex==0?"男":"女"):""}}</p>
+        <p style="margin-left: 20px;font-size: 20px;"><span style="font-weight: bold">地址：</span>{{description.address}}</p>
+        <p style="margin-left: 20px;font-size: 20px;"><span style="font-weight: bold">居住单元：</span>{{description.unitName}}</p>
+    </div>
+    </el-drawer>
+
+
+    <el-drawer
+            :title="getTitle"
+            :before-close="handleClose"
+            :visible.sync="dialog"
+            direction="ltr"
+            custom-class="demo-drawer"
+            ref="drawer">
+        <div class="demo-drawer__content">
+            <el-form :model="form">
+                <el-form-item label="房间名" :label-width="formLabelWidth">
+                    <el-input v-model="form.name" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="面积/m²" :label-width="formLabelWidth">
+                    <el-input v-model="form.area" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="房间状态" :label-width="formLabelWidth">
+                    <el-select v-model="form.status" placeholder="请选择房间状态">
+                        <el-option
+                                :key="0"
+                                label="未入住"
+                                value="0">
+                        </el-option>
+                        <el-option
+                                :key="1"
+                                label="已入住"
+                                value="1">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item label="手机号" :label-width="formLabelWidth" v-if="form.status==1">
+                    <el-input v-model="form.userId" autocomplete="off"></el-input>
+
+                    <el-select v-model="form.userId" placeholder="请选择房间状态">
+                        <el-option
+                                :key="item.userId"
+                                :label="item.username"
+                                :value="item.userId" v-for="item in userInfo">
+                        </el-option>
+                    </el-select>
+
+                </el-form-item>
+
+                <el-form-item label="隶属单元" :label-width="formLabelWidth">
+                    <el-select v-model="form.belongUnit" placeholder="请选择隶属单元">
+                        <el-option :label="item.name" :value="item.unitId" v-for="item in roomInfo"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <div class="demo-drawer__footer">
+                <el-button @click="cancelForm">取 消</el-button>
+                <el-button type="primary" @click="updateRoom" :loading="loading">{{ loading ? '提交中 ...' : '确 定' }}</el-button>
+            </div>
+        </div>
+    </el-drawer>
+
+</div>
+
+
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../api/building.js"></script>
+
+<script src="../../js/xlsx.core.min.js"></script>
+<script src="../../api/excelExport.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data(){
+            return {
+                headerData:'房屋管理',
+                input: '',
+                value:'',
+                pn: 1,
+                drawer: false,
+                direction: 'rtl',
+                shareData:{
+                    title: '快来看看，智慧物业管理系统，你值得拥有',
+                    link: window.location.href,
+                    image: 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg.zcool.cn%2Fcommunity%2F01f22259a8efb2a8012028a96414b6.png%401280w_1l_2o_100sh.png&refer=http%3A%2F%2Fimg.zcool.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1655536149&t=1afe91d46c03b4f4a5364007d1db20c8',
+                },
+                tableData: [],
+                tableData2:[],
+                table: false,
+                dialog: false,
+                loading: false,
+                form: {
+                    roomId:'',
+                    name: '',
+                    area:'',
+                    status:'',
+                    userId:'',
+                    belongUnit:''
+                },
+                page:{
+                    total:'',
+                    size:''
+                },
+                formLabelWidth: '80px',
+                timer: null,
+                isChange:false,
+                roomInfo:[],
+                userInfo:[],
+                description:{}
+            }
+        },
+        methods: {
+            handleEdit(event) {
+                this.dialog=true
+                let roomId=event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                for (let i = 0; i < this.tableData.length; i++) {
+                    if(this.tableData[i].roomId.toString() === roomId.toString()){
+                        this.form.name=this.tableData[i].name;
+                        this.form.roomId=parseInt(roomId) ;
+                        this.form.area=parseInt(this.tableData[i].area);
+                        this.form.status=this.tableData[i].status;
+                        this.form.belongUnit=this.tableData[i].belongUnit;
+                        this.form.userId=this.tableData[i].userId;
+                        this.isChange=true;
+
+                    }
+                }
+            },
+            getDescription(event){
+                this.description={}
+                let roomId=event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                console.log(roomId)
+                for (let i = 0; i < this.tableData.length; i++) {
+                    console.log("aa="+this.tableData[i].roomId)
+                    if (this.tableData[i].roomId.toString() === roomId.toString()) {
+                        console.log(this.tableData[i])
+                        if(this.tableData[i].userId === '' || this.tableData[i].userId==null){
+                            this.description={}
+                        }else{
+                            this.description=JSON.parse(JSON.stringify(this.tableData[i]))
+                        }
+                    }
+                }
+            },
+            updateRoom(){
+                console.log(this.form)
+                let name=this.form.name;
+                let area=this.form.area;
+                let belongUnit=this.form.belongUnit;
+                if(name.length >=1 && area >=1.0 && belongUnit > 1){
+                    if(this.isChange){
+                        axios.put("/room/update",this.form).then((res)=>{
+                            console.log(res)
+                            if(res.data.code === 1){
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.dialog=false;
+                                this.pageList();
+                                this.clearForm();
+
+                            }else{
+                                this.$message.error("修改失败")
+                            }
+                        })
+                    }else{
+                        this.form.roomId=null;
+                        axios.post("/room/save",this.form).then((res)=>{
+                            console.log(res)
+                            if(res.data.code === 1){
+                                this.$message({
+                                    message: res.data.data,
+                                    type: 'success'
+                                });
+                                this.dialog=false;
+                                this.pageList();
+                                this.clearForm();
+                            }else{
+                                this.$message.error("添加失败")
+                            }
+                        })
+                    }
+                }else{
+                    this.$message.error("字段不能为空，请检查！")
+                }
+
+            },
+            clearForm(){
+                this.form.roomId='';
+                this.form.name='';
+                this.form.area='';
+                this.form.status='';
+                this.form.userId='';
+                this.form.belongUnit='';
+            },
+            handleDelete(event) {
+                let roomId=event.currentTarget.parentNode.parentNode.parentNode.firstChild.firstChild.textContent
+                this.$confirm('是否永久删除id为《'+roomId+'》的记录, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.delete("/room/"+roomId).then((res)=>{
+                        if(res.data.code===1){
+                            this.$message({
+                                message: res.data.data,
+                                type: 'success'
+                            });
+                            this.pn=1;
+                            this.pageList();
+                        }else{
+                            this.$message.error(res.data.msg)
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            handleSizeChange(val) {
+                console.log(`每页 ${val} 条`);
+            },
+            handleCurrentChange(val) {
+                axios.get("/room?pn="+val+"&total=10"+"&status="+this.input).then((res)=>{
+                    console.log(res.data);
+                    if(res.data.code===1){
+                        console.log(11111111);
+                        this.tableData=res.data.data.records;
+                        this.tableData2=JSON.parse(JSON.stringify(res.data.data.records))
+                        this.page.total=res.data.data.total;
+                        this.page.size=res.data.data.size;
+                        this.getTableData();
+                    }
+                })
+            },
+            doFirstShare(){
+                window.open("http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=" + this.shareData.link + "&title=" + "快来看看，智慧物业管理系统，你值得拥有"  + "&pics=" + this.shareData.image);
+            },
+            handleClose(done) {
+                if (this.loading) {
+                    return;
+                }
+                this.$confirm('确定要提交表单吗？')
+                    .then(_ => {
+                        this.loading = true;
+                        this.timer = setTimeout(() => {
+                            done();
+                            // 动画关闭需要一定的时间
+                            setTimeout(() => {
+                                this.loading = false;
+                            }, 400);
+                        }, 2000);
+                    })
+                    .catch(_ => {});
+            },
+            cancelForm() {
+                this.loading = false;
+                this.dialog = false;
+                clearTimeout(this.timer);
+                this.clearForm();
+            },
+            pageList(){
+                axios.get("/room?pn="+this.pn+"&total=10"+"&status="+this.input).then((res)=>{
+                    console.log(res.data);
+                    if(res.data.code===1){
+                        console.log(11111111);
+                        this.tableData=res.data.data.records;
+                        this.tableData2=JSON.parse(JSON.stringify(res.data.data.records))
+                        this.page.total=res.data.data.total;
+                        this.page.size=res.data.data.size;
+                        this.getTableData();
+                    }
+                })
+
+                axios.get("/user/getAll").then((res)=>{
+                    console.log(res.data)
+                    if(res.data.code === 1){
+                        this.userInfo=res.data.data;
+                    }else{
+                        this.$message.error("接口异常！");
+                    }
+                })
+
+                axios.get("/unit/getAll").then((res)=>{
+                    console.log(res.data)
+                    if(res.data.code === 1){
+                        this.roomInfo=res.data.data;
+                    }else{
+                        this.$message.error("接口异常！");
+                    }
+                })
+            },
+            getTableData(){
+                for (let i = 0; i < this.tableData2.length; i++) {
+                    if(this.tableData2[i].status === 0){
+                        this.tableData2[i].status='未入住'
+                    }else{
+                        this.tableData2[i].status='已入住'
+                    }
+                }
+            },
+        },
+        computed:{
+            getTitle(){
+                if(this.form.roomId == null || this.form.roomId ===''){
+                    return "新增单元"
+                }else{
+                    return "修改单元"
+                }
+            },
+        },
+        mounted() {
+            this.pageList()
+        }
+    })
+</script>
+
+
+
+</body>
+</html>
